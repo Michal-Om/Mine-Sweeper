@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mine Sweeper</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+
+  <body onload="onInit()">
+    <h1>Mine Sweeper</h1>
+
+    <h2 class="counter">Mine Counter: <span>0</span></h2>
+
+    <button onclick="onRestartGame(this)" class="restart">😀</button>
+
+    <table>
+      <tbody class="board-table"></tbody>
+    </table>
+
+    <div class="modal">
+      <h2></h2>
+    </div>
+
+    <footer>&copy; Michal Omri</footer>
+
+    <script>
+      document.addEventListener("contextmenu", (event) => {
+        event.preventDefault();
+        const i = event.target.dataset.i;
+        const j = event.target.dataset.j;
+
+        onCellMarked(i, j); // Pass i, j to mark the cell
+      });
+    </script>
+
+    <script src="js/game.js"></script>
+    <script src="js/utils.js"></script>
+  </body>
+</html>
