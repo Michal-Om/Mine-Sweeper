@@ -62,3 +62,14 @@ footer {
   font-weight: bold;
   margin-top: 50%;
 }
+
+.lives {
+  display: flex; /* This ensures the images are displayed next to each other */
+  gap: 10px; /* Optional: Adds space between the images */
+}
+
+.lives img {
+  width: 32px; /* Set the desired width of the images */
+  height: auto; /* Maintain the aspect ratio */
+  display: block;
+}

@@ -4,9 +4,13 @@ const MINE = '💣'
 const EMPTY = ' '
 const FLAG = '🚩'
 
+const LIVES = '<img src="img/game lives.png">'
+
+
 //Model
 var gBoard
 var gMineCounter
+var gLivesCount = 3
 
 
 const gGame = {
@@ -26,15 +30,15 @@ function onInit() {
     gGame.markedCount = 0
     gGame.coveredCount = gLevel.SIZE ** 2
     console.log('covered cells at beginning of game:', gGame.coveredCount);
-
+    updateLives(3)
     gMineCounter = gLevel.MINES
     //Dom
     var elCounter = document.querySelector('h2.counter span')
     elCounter.innerText = gMineCounter
 
     gBoard = buildBoard(gLevel.SIZE)
-
     renderBoard(gBoard)
+
     // setRandMines(gLevel.MINES)
 
     var restartButton = document.querySelector('.restart')
@@ -63,6 +67,18 @@ function buildBoard(size) {
     console.table(board)
     // setMinesNegsCount(0, 3, board)
     return board
+}
+
+function updateLives(lives) { // a number
+    var elLivesDiv = document.querySelector('.lives')
+    elLivesDiv.innerHTML = ''
+    for (var i = 0; i < lives; i++) {
+        elLivesDiv.innerHTML += LIVES
+    }
+    console.log('lives left:', lives);
+    if (lives === 0) {
+        gameOver()
+    }
 }
 
 function chooseLevel(level) {
@@ -177,8 +193,14 @@ function onCellClicked(elCell, i, j) {
         elCell.style.backgroundColor = 'red'
         console.log('elCell after color red:', elCell);// not working!!
         uncover(elCell, i, j)
-        gameOver() // lose one life or Game over
-
+        gGame.markedCount++
+        gMineCounter--
+        gLivesCount--
+        updateLives(gLivesCount)
+        console.log('you have uncovered a mine');
+        //Dom
+        var elCounter = document.querySelector('h2.counter span')
+        elCounter.innerText = gMineCounter
     } else {
         uncover(elCell, i, j)
         gGame.coveredCount--
@@ -233,12 +255,6 @@ function expandUncover(i, j) {
 
         }
     }
-
-}
-
-function yoohoo() {
-    console.log('yoohoo!!');
-
 }
 
 
@@ -256,7 +272,6 @@ function uncoverNeighbors(cellI, cellJ, mat) { //uncover neghibor cells to empty
             if (neighborCell.minesAroundCount === 0) {
                 console.log(`Neighbor is empty. Expanding uncover for neighbor [${i}, ${j}]`);
                 expandUncover(i, j)
-                yoohoo()
             }
             if (neighborCell.isCovered) {
                 uncover(elNeighbor, i, j)
@@ -267,7 +282,6 @@ function uncoverNeighbors(cellI, cellJ, mat) { //uncover neghibor cells to empty
         }
     }
 }
-
 
 
 function uncoverAll(board) {
