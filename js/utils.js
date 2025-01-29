@@ -13,6 +13,15 @@ function createMat(ROWS, COLS) {
 }
 
 
+// location is an object like this - { i: 2, j: 7 }
+function renderCell(location, value) {
+    const elCell = document.querySelector(`.cell-${location.i}-${location.j}`)
+    // Select the span inside the cell (cell-content)
+    const elCellContent = elCell.querySelector('.cell-content');
+    // Update the content of the span (without removing the span itself)
+    elCellContent.innerText = value;
+}
+
 
 function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;

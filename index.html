@@ -14,12 +14,20 @@
 
     <button onclick="onRestartGame(this)" class="restart">😀</button>
 
+    <div class="lives"></div>
+
     <table>
       <tbody class="board-table"></tbody>
     </table>
 
     <div class="modal">
       <h2></h2>
+    </div>
+
+    <div class="difficulty">
+      <button onclick="chooseLevel('beginner')">Beginner</button>
+      <button onclick="chooseLevel('medium')">Medium</button>
+      <button onclick="chooseLevel('expert')">Expert</button>
     </div>
 
     <footer>&copy; Michal Omri</footer>

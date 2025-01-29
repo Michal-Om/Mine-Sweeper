@@ -30,13 +30,24 @@ th {
 }
 
 button.restart {
-  background-color: lightgray;
+  background-color: lightgoldenrodyellow;
   font-size: 25px;
   cursor: pointer;
   padding: 5px;
   margin: auto;
   margin-top: 20px;
   margin-bottom: 20px;
+  border-radius: 5px;
+}
+
+.difficulty button {
+  background-color: lightgoldenrodyellow;
+  font-size: 16px;
+  font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
+  cursor: pointer;
+  padding: 7px;
+  margin: auto;
+  margin-top: 40px;
   border-radius: 5px;
 }
 
