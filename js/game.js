@@ -10,8 +10,8 @@ const LIFE = '<img src="img/game lives.png">'
 //Model
 var gBoard
 var gMineCounter
-var gLivesCount = 3
-
+var gLivesCount
+var gIsFirstClick
 
 const gGame = {
     isOn: false,
@@ -27,10 +27,12 @@ const gLevel = {
 
 function onInit() {
     gGame.isOn = true
+    gIsFirstClick = true
     gGame.markedCount = 0
     gGame.coveredCount = gLevel.SIZE ** 2 // all board is covered
     console.log('covered cells at beginning of game:', gGame.coveredCount);
-    updateLives(3)
+    gLivesCount = 3
+    updateLives(gLivesCount)
     console.log('lives at beginning of game:', gLivesCount);
 
     gMineCounter = gLevel.MINES
@@ -49,6 +51,7 @@ function onInit() {
     var elH2 = document.querySelector('.modal h2')
     elH2.style.display = 'none'
 }
+
 function buildBoard(size) {
     const board = createMat(size, size)
 
@@ -56,7 +59,7 @@ function buildBoard(size) {
         for (var j = 0; j < board[i].length; j++) {
 
             board[i][j] = {
-                minesAroundCount: 4,
+                minesAroundCount: 0,
                 isCovered: true,
                 isMine: false,
                 isMarked: false,
@@ -64,10 +67,9 @@ function buildBoard(size) {
         }
     }
 
-    board[2][2].isMine = true
-    board[0][3].isMine = true
+    // board[2][2].isMine = true
+    // board[0][3].isMine = true
     console.table(board)
-    // setMinesNegsCount(0, 3, board) // check
     return board
 }
 
@@ -78,7 +80,7 @@ function updateLives(lives) { // a number 3 at start
         elLivesDiv.innerHTML += LIFE
     }
     console.log('lives left:', lives);
-    if (lives === 1) { // change to 0 after testing
+    if (lives === 1) { // if beginner (lives === 1)
         gameOver()
     }
 }
@@ -104,29 +106,30 @@ function chooseLevel(level) {
     onInit()
 }
 
-// function setRandMines(mines) {
-//     for (var i = 0; i < mines; i++) {
-//         var emptyCell = getEmptyCells(gBoard)
+function setRandMines(mines) {
 
-//         gBoard[emptyCell.i][emptyCell.j].isMine = true
-//         console.log(`mine added at ${emptyCell.i}, ${emptyCell.j}`);
+    for (var i = 0; i < mines; i++) {
+        var emptyCell = getEmptyCells(gBoard)
 
-//         renderBoard(gBoard)
-//     }
-// }
+        gBoard[emptyCell.i][emptyCell.j].isMine = true
+        console.log(`mine added at ${emptyCell.i}, ${emptyCell.j}`);
 
-// function getEmptyCells(board) {
-//     var emptyCells = [] //arrange empty cells coordinates in an array
-//     for (var i = 0; i < board.length; i++) {
-//         for (var j = 0; j < board[i].length; j++) {
-//             if (board[i][j].isCovered && !board[i][j].isMine)
-//                 emptyCells.push({ i, j })// short for  { i: i, j: j }
-//         }
-//     }
-//     var randomIdx = getRandomInt(0, emptyCells.length - 1) // gives an index from the emptyCells array. in the array the indx represents an object
-//     // console.log('random idx for mine:', randomIdx);
-//     return emptyCells[randomIdx]
-// }
+        renderBoard(gBoard)
+    }
+}
+
+function getEmptyCells(board) {
+    var emptyCells = [] //arrange empty cells coordinates in an array
+    for (var i = 0; i < board.length; i++) {
+        for (var j = 0; j < board[i].length; j++) {
+            if (board[i][j].isCovered && !board[i][j].isMine)
+                emptyCells.push({ i, j })// short for  { i: i, j: j }
+        }
+    }
+    var randomIdx = getRandomInt(0, emptyCells.length - 1) // gives an index from the emptyCells array. in the array the indx represents an object
+    // console.log('random idx for mine:', randomIdx);
+    return emptyCells[randomIdx]
+}
 
 
 function setMinesNegsCount(cellI, cellJ, board) {
@@ -170,6 +173,7 @@ function renderBoard(board) { //show the board visually using html
             } else {
                 strHTML += renderedCellNums
             }
+
             strHTML += '</span>'
             strHTML += '</td>'
         }
@@ -179,58 +183,41 @@ function renderBoard(board) { //show the board visually using html
     elBoard.innerHTML = strHTML
 }
 
-// function isFirstClick() { // check that all board is uncovered
-//     var totalCells = gLevel.SIZE ** 2
-//     for (var i = 0; i < gBoard.length; i++) {
-//         for (var j = 0; j < gBoard[i].length; j++) {
-//             var currCell = gBoard[i][j]
-//             if (!currCell.isCovered) {
-//                 uncoveredCells++
-//             }
-//         }
-//     }
-//     if (uncoveredCells === totalCells) {
-//         return true
-//     }
-// }
-// function onFirstClick(){
-//  var firstBoard = createMat(gLevel.SIZE, gLevel.SIZE)
-
-// }
-
 function onCellClicked(elCell, i, j) {
     elCell = document.querySelector(`[data-i="${i}"][data-j="${j}"]`) //spefic cell that was clicked
     console.log('clicked cell:', elCell); // html info
-    //check first click
-    if (isFirstClick) onFirstClick()
-    //model
-    var currCell = gBoard[i][j]
 
-    if (currCell.minesAroundCount === 0 && currCell.isCovered) {
-        uncoverNeighbors(i, j, gBoard)
-    }
-
-    if (currCell.isMine) {
-        // elCell.style.backgroundColor = 'red'
-        // console.log('elCell after color red:', elCell);// not working!!
+    if (gIsFirstClick) {
         uncover(elCell, i, j)
-        gGame.markedCount++
-        gMineCounter--
-        gLivesCount--
-        gGame.coveredCount--
-        // gGame.coveredCount++ //change exposed mine to covered to determine victory
-        updateLives(gLivesCount)
-        console.log('you have uncovered a mine');
-        //Dom
-        var elCounter = document.querySelector('h2.counter span')
-        elCounter.innerText = gMineCounter
+        setRandMines(gLevel.MINES)
+        gIsFirstClick = false
     } else {
-        uncover(elCell, i, j)
-        gGame.coveredCount--
-    }
+        //model
+        var currCell = gBoard[i][j]
 
-    console.log('remaining covered cells including marked:', gGame.coveredCount);
-    isVictory()
+        if (currCell.minesAroundCount === 0 && currCell.isCovered) {
+            uncoverNeighbors(i, j, gBoard)
+        }
+
+        if (currCell.isMine) {
+            uncover(elCell, i, j)
+            // gGame.markedCount++
+            gMineCounter--
+            gLivesCount--
+            // gGame.coveredCount--
+            updateLives(gLivesCount)
+            console.log('you have uncovered a mine');
+            //Dom
+            var elCounter = document.querySelector('h2.counter span')
+            elCounter.innerText = gMineCounter
+        } else {
+            uncover(elCell, i, j)
+            gGame.coveredCount--
+        }
+
+        console.log('remaining covered cells including marked:', gGame.coveredCount);
+        isVictory()
+    }
 }
 
 function uncover(elCell, i, j) { // left click //changes only the visibility
@@ -242,7 +229,6 @@ function uncover(elCell, i, j) { // left click //changes only the visibility
     var elCellContent = elCell.querySelector('.cell-content')// span disappears after renderCell
     // console.log('elCellContent:', elCellContent);
     elCellContent.style.visibility = 'visible'
-
     //Dom
     elCell.style.backgroundColor = 'yellow'
 
@@ -291,7 +277,7 @@ function uncoverNeighbors(cellI, cellJ, mat) { //uncover neghibor cells to empty
             var elNeighbor = document.querySelector(`[data-i="${i}"][data-j="${j}"]`) // get the html details in order to uncover the neighbor
             var neighborCell = mat[i][j] //model coordinates
 
-            console.log('mines around neighbor:', neighborCell.minesAroundCount);
+            // console.log('mines around neighbor:', neighborCell.minesAroundCount);
             if (neighborCell.minesAroundCount === 0) {
                 console.log(`Neighbor is empty. Expanding uncover for neighbor [${i}, ${j}]`);
                 expandUncover(i, j)
@@ -349,7 +335,7 @@ function onCellMarked(i, j) { //flags
     }
     console.log('total flagged cells:', gGame.markedCount);
 
-    elCell.classList.toggle('marked') // not sure this is active
+    elCell.classList.toggle('marked')
     console.log('elCell after toggle:', elCell);
 
 }
@@ -381,10 +367,6 @@ function isVictory() {
             if (!currCell.isCovered) {
                 uncoveredCells++
             }
-            // if (currCell.isMine) {
-            //     uncoveredCells-- //don't count mined cells as uncovered, in order ot determine victory
-            //     currCell.isCovered = true
-            // }
         }
     }
     console.log('total uncovered cells:', uncoveredCells); // on win game expected: 14 or 15
