@@ -22,6 +22,11 @@ function renderCell(location, value) {
     elCellContent.innerText = value;
 }
 
+function getClassName(location) {
+    const cellClass = `cell-${location.i}-${location.j}`
+    return cellClass
+}
+
 
 function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
