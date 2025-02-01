@@ -14,6 +14,11 @@ var gLivesCount
 var gHintsCount
 var gIsFirstClick
 
+//timer
+var gMinutes
+var gSeconds
+var gMilliseconds
+var gTimerIntervalId
 
 const gGame = {
     isOn: false,
@@ -28,12 +33,13 @@ const gLevel = {
 }
 
 function onInit() {
+    clearInterval(gTimerIntervalId)
     gGame.isOn = true
     gIsFirstClick = true
-
     gGame.markedCount = 0
     gGame.coveredCount = gLevel.SIZE ** 2 // all board is covered
     console.log('covered cells at beginning of game:', gGame.coveredCount);
+    //lives
     if (gLevel.MINES === 2) {
         gLivesCount = 2
         updateLives(gLivesCount)
@@ -42,6 +48,7 @@ function onInit() {
         updateLives(gLivesCount)
     }
     console.log('lives at beginning of game:', gLivesCount);
+    //hints
     gHintsCount = 3
     updateHints(gHintsCount)
     gMineCounter = gLevel.MINES
@@ -49,13 +56,22 @@ function onInit() {
     var elCounter = document.querySelector('h2.counter span')
     elCounter.innerText = gMineCounter
 
+    //timer variables
+    gMinutes = 0
+    gSeconds = 0
+    gMilliseconds = 0
+    var elTimer = document.querySelector('.timer');
+    elTimer.innerText = '00:00:000';
+
+    //board
     gBoard = buildBoard(gLevel.SIZE)
     renderBoard(gBoard)
 
-    // setRandMines(gLevel.MINES)
-
     var restartButton = document.querySelector('.restart')
     restartButton.innerText = '😃'
+
+    var elModal = document.querySelector('.modal')
+    elModal.style.display = 'none'
 
     var elH2 = document.querySelector('.modal h2')
     elH2.style.display = 'none'
@@ -177,6 +193,7 @@ function setRandMines(mines, firstClickI, firstClickJ) {
         // console.log('elCellContent:', elCellContent);
     }
 }
+
 function getEmptyCells(board, firstClickI, firstClickJ) {
     //this function makes an array of empty cells on the board 
     // that are not first click {i, j}, not a mine or neighbors
@@ -212,7 +229,7 @@ function setMinesNegsCount(cellI, cellJ, board) { // get a cell and counts the m
         }
     }
     currCell.minesAroundCount = minesAroundCount
-    console.log('Number of mines nearby', minesAroundCount);
+    // console.log('Number of mines nearby', minesAroundCount);
     return minesAroundCount
 }
 
@@ -227,9 +244,17 @@ function onCellClicked(elCell, i, j) {
 
     if (gIsFirstClick) {
         console.log('this is your first click:', i, j);
+
+        gTimerIntervalId = setInterval(updateTimer, 10)
+        setTimeout(() => {
+            clearInterval(gTimerIntervalId)
+            console.log('Game Over! Time is up!');
+        }, 250000)
+
         gIsFirstClick = false
         setRandMines(gLevel.MINES, i, j)
     }
+
     uncover(elCell, i, j)
     gGame.coveredCount--
 
@@ -354,8 +379,8 @@ function onCellMarked(i, j) { //flags
     console.log('elCell:', elCell);
 
     // Mark the cell by changing its content
-    if (gBoard[i][j].isMarked) {
-        elCell.innerText = EMPTY
+    if (gBoard[i][j].isMarked) { //if the cell is already marked, second right click will remove the flag
+        elCell.innerText = EMPTY //!!! needs to be changed back to the original cell-content and still be covered
 
         gGame.markedCount--
         gMineCounter++
@@ -363,6 +388,7 @@ function onCellMarked(i, j) { //flags
         //Dom
         var elCounter = document.querySelector('h2.counter span')
         elCounter.innerText = gMineCounter //update mine counter display
+
     } else {
         elCell.innerText = FLAG
         gGame.markedCount++
@@ -382,12 +408,20 @@ function onCellMarked(i, j) { //flags
 }
 
 function gameOver() {
+    clearInterval(gTimerIntervalId)
     gGame.isOn = false
+    uncoverAll(gBoard)
+    gGame.secsPassed = gSeconds
+    console.log('sec passed:', gSeconds);
+
     //DOM
+    var elModal = document.querySelector('.modal')
+    elModal.style.display = 'block'
+
     var elH2 = document.querySelector('.modal h2')
     elH2.innerText = 'Game Over'
     elH2.style.display = 'block'
-    uncoverAll(gBoard)
+
     var restartButton = document.querySelector('.restart')
     restartButton.innerText = '😩'
 }
@@ -406,7 +440,14 @@ function isVictory() {
     if (gGame.markedCount === gLevel.MINES && //number of flags === number of mines 
         nonMinesCells === uncoveredCells && gLivesCount > 0) { //14
         console.log('You Win!');
+        clearInterval(gTimerIntervalId)
+        gGame.secsPassed = gSeconds
+        console.log('sec passed:', gSeconds);
+
         //Dom
+        var elModal = document.querySelector('.modal')
+        elModal.style.display = 'block'
+
         var elH2 = document.querySelector('.modal h2')
         elH2.innerText = 'You Win!'
         elH2.style.display = 'block'
@@ -435,6 +476,7 @@ function getUncoveredCells() {
 
 function onRestartGame() {
     console.log('Restarting the game...');
+    clearInterval(gTimerIntervalId)
     onInit()
 }
 
