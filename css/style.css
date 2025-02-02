@@ -3,6 +3,9 @@ body {
   color: black;
   text-align: center;
   background-image: url("/img/explosion.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .lives {
@@ -28,16 +31,19 @@ body {
   display: block;
   margin-top: -40px;
   cursor: pointer;
+  display: block;
 }
 
 h1 {
   font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
   color: black;
+  font-size: 40px;
 }
 
 h2 {
   font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
   color: black;
+  font-size: 30px;
 }
 
 table {
@@ -75,7 +81,8 @@ button.restart {
   font-size: 20px;
 }
 
-.difficulty button {
+.difficulty button,
+.dark-mode {
   background-color: lightgoldenrodyellow;
   font-size: 16px;
   font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
@@ -92,7 +99,6 @@ button:hover {
 
 .modal {
   margin: auto;
-  /* right: 10px; */
   display: none;
   width: 300px;
   padding: 10px;

@@ -13,6 +13,7 @@ var gMineCounter
 var gLivesCount
 var gHintsCount
 var gIsFirstClick
+var gIsClickAfterHint
 
 //timer
 var gMinutes
@@ -34,6 +35,7 @@ const gLevel = {
 
 function onInit() {
     clearInterval(gTimerIntervalId)
+
     gGame.isOn = true
     gIsFirstClick = true
     gGame.markedCount = 0
@@ -52,7 +54,8 @@ function onInit() {
     gHintsCount = 3
     updateHints(gHintsCount)
     gMineCounter = gLevel.MINES
-    //Dom
+    gIsClickAfterHint = false
+    //Dom mine counter
     var elCounter = document.querySelector('h2.counter span')
     elCounter.innerText = gMineCounter
 
@@ -146,8 +149,16 @@ function updateHints(hints) {
 
 function onHintClicked(elImg) {
     if (gHintsCount === 0) return
+    //add condition if elImg has already been clicked
+    if (elImg.style.backgroundColor === 'yellow') {
+        console.log(`Hint ${elImg.dataset.id} has already been used`); // elImg.dataset.id =>1 / 2/ 3
+        return
+    }
     //directly access the img element
+    gIsClickAfterHint = true
     elImg.style.backgroundColor = 'yellow'
+
+    // gIsClickAfterHint = false
     gHintsCount--
     if (gHintsCount === 0) {
         console.log('No Hints Left');
@@ -155,26 +166,6 @@ function onHintClicked(elImg) {
     console.log('Hints left:', gHintsCount);
 }
 
-function chooseLevel(level) {
-    switch (level) {
-        case 'beginner':
-            gLevel.SIZE = 4
-            gLevel.MINES = 2
-            break
-        case 'medium':
-            gLevel.SIZE = 8
-            gLevel.MINES = 14
-            break
-        case 'expert':
-            gLevel.SIZE = 12
-            gLevel.MINES = 32
-            break
-        default:
-            console.log('invalid level');
-            return
-    }
-    onInit()
-}
 
 function setRandMines(mines, firstClickI, firstClickJ) {
     //the function recieves i, j of first click and number of mines on the board
@@ -238,6 +229,7 @@ function onCellClicked(elCell, i, j) {
 
     var currCell = gBoard[i][j]
     if (!currCell.isCovered) return
+    if (currCell.isMarked) return
 
     elCell = document.querySelector(`[data-i="${i}"][data-j="${j}"]`) //spefic cell that was clicked
     console.log('clicked cell:', elCell); // html info
@@ -246,13 +238,23 @@ function onCellClicked(elCell, i, j) {
         console.log('this is your first click:', i, j);
 
         gTimerIntervalId = setInterval(updateTimer, 10)
-        setTimeout(() => {
-            clearInterval(gTimerIntervalId)
-            console.log('Game Over! Time is up!');
-        }, 250000)
-
         gIsFirstClick = false
         setRandMines(gLevel.MINES, i, j)
+    }
+
+    if (gIsClickAfterHint) {
+        setTimeout(() => {
+            uncover(elCell, i, j);
+            uncoverNeighbors(i, j, gBoard);
+            console.log('This was your hint!!');
+        }, 100);
+
+        setTimeout(() => {
+            cover(elCell, i, j);
+            coverNeighbors(i, j, gBoard);
+            console.log('Hint is over!');
+            gIsClickAfterHint = false;
+        }, 1400)
     }
 
     uncover(elCell, i, j)
@@ -288,7 +290,7 @@ function uncover(elCell, i, j) { // left click //changes only the visibility
     // console.log('rendered cell nums:', renderedCellNums);
 
     //Dom: display
-    var elCell = document.querySelector(`[data-i="${i}"][data-j="${j}"]`)
+    // var elCell = document.querySelector(`[data-i="${i}"][data-j="${j}"]`)//?? Not needed?
     var elCellContent = elCell.querySelector('.cell-content')
     elCellContent.style.visibility = 'visible'
     // console.log('elCellContent:', elCellContent);
@@ -306,7 +308,38 @@ function uncover(elCell, i, j) { // left click //changes only the visibility
     }
 }
 
+function cover(elCell, i, j) {
+    //model
+    gBoard[i][j].isCovered = true
+    //Dom
+    elCell.style.backgroundColor = 'lemonchiffon'
+    var elCellContent = elCell.querySelector('.cell-content')
+    elCellContent.innerText = EMPTY
+    elCellContent.style.visibility = 'hidden'
+}
+
+function coverNeighbors(cellI, cellJ, board) {
+    for (var i = cellI - 1; i <= cellI + 1; i++) {
+        if (i < 0 || i >= board.length) continue
+        for (var j = cellJ - 1; j <= cellJ + 1; j++) {
+            if (i === cellI && j === cellJ) continue
+            if (j < 0 || j >= board[i].length) continue
+
+            var elNeighbor = document.querySelector(`[data-i="${i}"][data-j="${j}"]`) // get the html details in order to uncover the neighbor
+            var neighborCell = board[i][j] //model coordinates
+            //model
+            neighborCell.isCovered = true
+            //Dom
+            elNeighbor.style.backgroundColor = 'lemonchiffon'
+            var elNeighborCellContent = elNeighbor.querySelector('.cell-content')
+            elNeighborCellContent.innerText = EMPTY
+            elNeighborCellContent.style.visibility = 'hidden'
+        }
+    }
+}
+
 function expandUncover(i, j) {
+    if (gIsClickAfterHint) return
     //uncover neghibor cells to empty cells
     for (var rowIdx = i - 1; rowIdx <= i + 1; rowIdx++) {
         if (rowIdx < 0 || rowIdx >= gBoard.length) continue
@@ -331,17 +364,17 @@ function expandUncover(i, j) {
     }
 }
 
-function uncoverNeighbors(cellI, cellJ, mat) { //uncover neghibor cells to empty cells. cellI and cellJ represent the original cell being check for neighbors
+function uncoverNeighbors(cellI, cellJ, board) { //uncover neghibor cells to empty cells. cellI and cellJ represent the original cell being check for neighbors
     console.log('hello uncover neighbors!!');
 
     for (var i = cellI - 1; i <= cellI + 1; i++) {
-        if (i < 0 || i >= mat.length) continue
+        if (i < 0 || i >= board.length) continue
         for (var j = cellJ - 1; j <= cellJ + 1; j++) {
             if (i === cellI && j === cellJ) continue
-            if (j < 0 || j >= mat[i].length) continue
+            if (j < 0 || j >= board[i].length) continue
 
             var elNeighbor = document.querySelector(`[data-i="${i}"][data-j="${j}"]`) // get the html details in order to uncover the neighbor
-            var neighborCell = mat[i][j] //model coordinates
+            var neighborCell = board[i][j] //model coordinates
 
             // console.log('mines around neighbor:', neighborCell.minesAroundCount);
             if (neighborCell.minesAroundCount === 0) {
@@ -357,6 +390,7 @@ function uncoverNeighbors(cellI, cellJ, mat) { //uncover neghibor cells to empty
     }
 }
 
+
 function uncoverAll(board) {
     for (let i = 0; i < board.length; i++) {
         for (let j = 0; j < board[i].length; j++) {
@@ -371,39 +405,40 @@ function uncoverAll(board) {
 
 function onCellMarked(i, j) { //flags
     if (!gGame.isOn) return
-
+    if (!gBoard[i][j].isCovered) return
     // Dom right-click event details from dataset
     console.log('Cell marked at:', i, j);
     //Dom
     var elCell = document.querySelector(`[data-i="${i}"][data-j="${j}"]`) //spefic cell that was clicked
     console.log('elCell:', elCell);
 
-    // Mark the cell by changing its content
-    if (gBoard[i][j].isMarked) { //if the cell is already marked, second right click will remove the flag
-        elCell.innerText = EMPTY //!!! needs to be changed back to the original cell-content and still be covered
-
-        gGame.markedCount--
-        gMineCounter++
-        gBoard[i][j].isMarked = false
-        //Dom
-        var elCounter = document.querySelector('h2.counter span')
-        elCounter.innerText = gMineCounter //update mine counter display
-
-    } else {
+    if (!gBoard[i][j].isMarked) {
         elCell.innerText = FLAG
         gGame.markedCount++
         //model
         gBoard[i][j].isMarked = true
         gMineCounter--
         console.log('mines left after flag:', gMineCounter);
+    } else {
+        //if the cell is already marked, second right click will remove the flag
+        elCell.innerText = EMPTY
+        gGame.markedCount--
+        gMineCounter++
+        gBoard[i][j].isMarked = false
+        gGame.coveredCount++
         //Dom
         var elCounter = document.querySelector('h2.counter span')
         elCounter.innerText = gMineCounter //update mine counter display
+
     }
-    console.log('total flagged cells:', gGame.markedCount);
+    //Dom
+    var elCounter = document.querySelector('h2.counter span')
+    elCounter.innerText = gMineCounter //update mine counter display
 
     elCell.classList.toggle('marked')
     console.log('elCell after toggle:', elCell);
+    console.log('total flagged cells:', gGame.markedCount);
+
     isVictory()
 }
 
@@ -474,10 +509,80 @@ function getUncoveredCells() {
     return uncoveredCells
 }
 
+function chooseLevel(level) {
+    switch (level) {
+        case 'beginner':
+            gLevel.SIZE = 4
+            gLevel.MINES = 2
+            break
+        case 'medium':
+            gLevel.SIZE = 8
+            gLevel.MINES = 14
+            break
+        case 'expert':
+            gLevel.SIZE = 12
+            gLevel.MINES = 32
+            break
+        default:
+            console.log('invalid level');
+            return
+    }
+    onInit()
+}
+
 function onRestartGame() {
     console.log('Restarting the game...');
     clearInterval(gTimerIntervalId)
     onInit()
 }
 
+function toggleDarkMode() {
+    const elBody = document.querySelector('body')
+    const elBtn = document.querySelector('.dark-mode')
 
+    if (elBtn.innerText === 'Dark Mode') {
+        elBody.style.backgroundImage = 'url("img/dark_mode.png")'
+        elBtn.innerText = 'Light Mode'
+
+        const elTimer = document.querySelector('.timer')
+        elTimer.style.color = 'yellow'
+
+        const elFooter = document.querySelector('footer')
+        elFooter.style.color = 'orangered'
+
+        const elModal = document.querySelector('.modal')
+        elModal.style.backgroundColor = 'orangered'
+
+        const elH2Modal = document.querySelector('.modal h2')
+        elH2Modal.style.color = 'black'
+
+        const elH1 = document.querySelector('h1')
+        elH1.style.color = 'yellow'
+
+        const elH2 = document.querySelector('h2')
+        elH2.style.color = 'yellow'
+
+    } else {
+        elBody.style.backgroundImage = 'url("img/explosion.jpg")'
+        elBtn.innerText = 'Dark Mode'
+
+        const elTimer = document.querySelector('.timer')
+        elTimer.style.color = 'black'
+
+        const elFooter = document.querySelector('footer')
+        elFooter.style.color = 'black'
+
+        const elModal = document.querySelector('.modal')
+        elModal.style.backgroundColor = 'black'
+
+        const elH2Modal = document.querySelector('.modal h2')
+        elH2Modal.style.color = 'orange'
+
+        const elH1 = document.querySelector('h1')
+        elH1.style.color = 'black'
+
+        const elH2 = document.querySelector('h2')
+        elH2.style.color = 'black'
+
+    }
+}
